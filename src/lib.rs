@@ -1,3 +1,3 @@
-mod hex_cell;
-mod honeycomb;
-mod cartesian_point;
+pub mod hex_cell;
+pub mod honeycomb;
+pub mod cartesian_point;

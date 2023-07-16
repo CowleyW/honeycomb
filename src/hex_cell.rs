@@ -3,8 +3,8 @@ use crate::cartesian_point::CartesianPoint;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct HexCell {
-    q: i32,
-    r: i32,
+    pub q: i32,
+    pub r: i32,
 }
 
 impl HexCell {
@@ -22,9 +22,9 @@ impl HexCell {
         directions.into_iter().map(|d| &d + self).collect::<Vec<_>>()
     }
 
-    pub fn cartesian_pos(&self) -> CartesianPoint {
-        let y = -1.5 * r as f32;
-        let x = (3 as f32).sqrt() * 0.5 * (r as f32 / 2.0 + q as f32);
+    pub fn cartesian_point(&self) -> CartesianPoint {
+        let y = -1.5 * self.r as f32;
+        let x = 3f32.sqrt() * (self.r as f32 / 2.0 + self.q as f32);
 
         CartesianPoint::new(x, y)
     }
@@ -76,6 +76,7 @@ impl Sub for &HexCell {
 
 #[cfg(test)]
 mod tests {
+    use crate::cartesian_point::CartesianPoint;
     use crate::hex_cell::HexCell;
 
     #[test]
@@ -120,7 +121,14 @@ mod tests {
     }
 
     #[test]
-    fn test_cartesian_pos() {
-        
+    fn test_cartesian_point() {
+        let o = HexCell::new(0, 0);
+        assert_eq!(o.cartesian_point(), CartesianPoint::new(0.0, 0.0));
+
+        let y1 = HexCell::new(1, -2);
+        assert_eq!(y1.cartesian_point(), CartesianPoint::new(0.0, 3.0));
+
+        let y2 = HexCell::new(-2, 4);
+        assert_eq!(y2.cartesian_point(), CartesianPoint::new(0.0, -6.0));
     }
 }
