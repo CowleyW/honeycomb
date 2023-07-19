@@ -3,8 +3,8 @@ mod utils;
 use crate::utils::camera::Camera;
 use honeycomb::hex_cell::HexCell;
 use honeycomb::honeycomb::Honeycomb;
+use rand::random;
 use speedy2d::color::Color;
-use speedy2d::dimen::Vec2;
 use speedy2d::window::{WindowHandler, WindowHelper};
 use speedy2d::{Graphics2D, Window};
 
@@ -14,15 +14,19 @@ const HEIGHT: u32 = 600;
 struct Handler {
     honeycomb: Honeycomb<u8>,
     camera: Camera,
-    target_hex: Option<HexCell>,
 }
 
 impl Handler {
     fn new() -> Self {
+        let mut honeycomb = Honeycomb::<u8>::new(3);
+
+        for h in honeycomb.grid.iter() {
+            honeycomb.data.insert(*h, random::<u8>());
+        }
+
         Self {
-            honeycomb: Honeycomb::new(3),
+            honeycomb,
             camera: Camera::new(0.0, 0.0, WIDTH as f32, HEIGHT as f32, 2.0),
-            target_hex: None,
         }
     }
 
@@ -40,6 +44,10 @@ impl Handler {
         graphics.draw_line(vertices[3], vertices[4], 4.0, color);
         graphics.draw_line(vertices[4], vertices[5], 4.0, color);
         graphics.draw_line(vertices[5], vertices[0], 4.0, color);
+
+        let center = self.camera.world_to_screen(hex.world_location());
+        let radius = *self.honeycomb.data.get(hex).unwrap() as f32 / 16.0;
+        graphics.draw_circle((center.x, center.y), radius, color);
     }
 }
 
@@ -51,21 +59,12 @@ impl WindowHandler for Handler {
             self.draw_hexagon(h, graphics, Color::BLACK);
         }
 
-        if let Some(h) = self.target_hex {
-            self.draw_hexagon(&h, graphics, Color::RED);
-        }
-
         helper.request_redraw();
-    }
-
-    fn on_mouse_move(&mut self, _helper: &mut WindowHelper<()>, position: Vec2) {
-        let world_position = self.camera.screen_to_world(position.x, position.y);
-        self.target_hex = self.honeycomb.nearest_hex(world_position);
     }
 }
 
 fn main() {
-    let window = Window::new_centered("Honeycomb Grid", (800, 600)).unwrap();
+    let window = Window::new_centered("Custom Data", (800, 600)).unwrap();
 
     window.run_loop(Handler::new());
 }

@@ -1,11 +1,13 @@
 use crate::cartesian_point::CartesianPoint;
 use crate::hex_cell::HexCell;
+use std::collections::HashMap;
 
-pub struct Honeycomb {
+pub struct Honeycomb<T> {
     pub grid: Vec<HexCell>,
+    pub data: HashMap<HexCell, T>,
 }
 
-impl Honeycomb {
+impl<T> Honeycomb<T> {
     pub fn new(n: usize) -> Self {
         let n = n as i32;
         let mut grid = Vec::new();
@@ -18,8 +20,9 @@ impl Honeycomb {
                 grid.push(HexCell::new(q, r));
             }
         }
+        let data = HashMap::new();
 
-        Self { grid }
+        Self { grid, data }
     }
 
     pub fn nearest_hex(&self, point: CartesianPoint) -> Option<HexCell> {

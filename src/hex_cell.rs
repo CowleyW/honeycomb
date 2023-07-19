@@ -1,7 +1,7 @@
 use crate::cartesian_point::CartesianPoint;
 use std::ops::{Add, Sub};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct HexCell {
     pub q: i32,
     pub r: i32,
