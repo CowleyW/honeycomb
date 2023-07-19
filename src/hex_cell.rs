@@ -1,5 +1,5 @@
-use std::ops::{Add, Sub};
 use crate::cartesian_point::CartesianPoint;
+use std::ops::{Add, Sub};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct HexCell {
@@ -14,19 +14,42 @@ impl HexCell {
 
     pub fn neighbors(&self) -> Vec<HexCell> {
         let directions: [HexCell; 6] = [
-            HexCell::new(1, 0), HexCell::new(1, -1),
-            HexCell::new(0, -1), HexCell::new(-1, 0),
-            HexCell::new(-1, 1), HexCell::new(0, 1),
+            HexCell::new(1, 0),
+            HexCell::new(1, -1),
+            HexCell::new(0, -1),
+            HexCell::new(-1, 0),
+            HexCell::new(-1, 1),
+            HexCell::new(0, 1),
         ];
 
-        directions.into_iter().map(|d| &d + self).collect::<Vec<_>>()
+        directions
+            .into_iter()
+            .map(|d| &d + self)
+            .collect::<Vec<_>>()
     }
 
-    pub fn cartesian_point(&self) -> CartesianPoint {
+    pub fn world_location(&self) -> CartesianPoint {
         let y = -1.5 * self.r as f32;
         let x = 3f32.sqrt() * (self.r as f32 / 2.0 + self.q as f32);
 
         CartesianPoint::new(x, y)
+    }
+
+    pub fn vertex_locations(&self) -> Vec<CartesianPoint> {
+        let center = self.world_location();
+        let (x, y) = (center.x, center.y);
+        let cos30 = 3f32.sqrt() / 2.0;
+
+        [
+            (x, y + 1.0),
+            (x + cos30, y + 0.5),
+            (x + cos30, y - 0.5),
+            (x, y - 1.0),
+            (x - cos30, y - 0.5),
+            (x - cos30, y + 0.5),
+        ]
+        .map(|(x, y)| CartesianPoint::new(x, y))
+        .to_vec()
     }
 }
 
@@ -123,12 +146,12 @@ mod tests {
     #[test]
     fn test_cartesian_point() {
         let o = HexCell::new(0, 0);
-        assert_eq!(o.cartesian_point(), CartesianPoint::new(0.0, 0.0));
+        assert_eq!(o.world_location(), CartesianPoint::new(0.0, 0.0));
 
         let y1 = HexCell::new(1, -2);
-        assert_eq!(y1.cartesian_point(), CartesianPoint::new(0.0, 3.0));
+        assert_eq!(y1.world_location(), CartesianPoint::new(0.0, 3.0));
 
         let y2 = HexCell::new(-2, 4);
-        assert_eq!(y2.cartesian_point(), CartesianPoint::new(0.0, -6.0));
+        assert_eq!(y2.world_location(), CartesianPoint::new(0.0, -6.0));
     }
 }
