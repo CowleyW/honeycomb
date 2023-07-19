@@ -52,7 +52,14 @@ impl WindowHandler for Handler {
         }
 
         if let Some(h) = self.target_hex {
-            self.draw_hexagon(&h, graphics, Color::RED);
+            let color = match h.axial_dist_to(&HexCell::origin()) {
+                0 => Color::RED,
+                1 => Color::GREEN,
+                2 => Color::BLUE,
+                _ => Color::YELLOW,
+            };
+
+            self.draw_hexagon(&h, graphics, color);
         }
 
         helper.request_redraw();

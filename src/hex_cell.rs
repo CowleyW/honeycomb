@@ -12,6 +12,10 @@ impl HexCell {
         Self { q, r }
     }
 
+    pub fn origin() -> Self {
+        Self::new(0, 0)
+    }
+
     pub fn neighbors(&self) -> Vec<HexCell> {
         let directions: [HexCell; 6] = [
             HexCell::new(1, 0),
@@ -50,6 +54,12 @@ impl HexCell {
         ]
         .map(|(x, y)| CartesianPoint::new(x, y))
         .to_vec()
+    }
+
+    pub fn axial_dist_to(&self, to: &HexCell) -> usize {
+        let vec = self - to;
+
+        (vec.q.abs() + vec.r.abs() + (-vec.q - vec.r).abs()) as usize / 2
     }
 }
 
