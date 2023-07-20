@@ -8,9 +8,10 @@ use speedy2d::color::Color;
 use speedy2d::dimen::Vec2;
 use speedy2d::window::{KeyScancode, VirtualKeyCode, WindowHandler, WindowHelper};
 use speedy2d::{Graphics2D, Window};
+use std::time::Instant;
 
-const WIDTH: u32 = 1200;
-const HEIGHT: u32 = 900;
+const WIDTH: u32 = 1600;
+const HEIGHT: u32 = 1200;
 
 struct State {
     honeycomb: Honeycomb<bool>,
@@ -18,6 +19,8 @@ struct State {
     last_mouse_position: Vec2,
     start_hex: Option<HexCell>,
     end_hex: Option<HexCell>,
+    ground: Vec<HexCell>,
+    walls: Vec<HexCell>,
 }
 
 impl State {
@@ -28,12 +31,34 @@ impl State {
             honeycomb.data.insert(*h, random::<bool>());
         }
 
+        let ground = honeycomb
+            .grid
+            .iter()
+            .filter(|h| {
+                if let Some(d) = honeycomb.data.get(*h) {
+                    *d
+                } else {
+                    false
+                }
+            })
+            .map(|h| *h)
+            .collect::<Vec<_>>();
+
+        let walls = honeycomb
+            .grid
+            .iter()
+            .filter(|h| !ground.contains(h))
+            .map(|h| *h)
+            .collect::<Vec<_>>();
+
         Self {
             honeycomb,
-            camera: Camera::new(0.0, 0.0, WIDTH as f32, HEIGHT as f32, 8.0),
+            camera: Camera::new(0.0, 0.0, WIDTH as f32, HEIGHT as f32, 5.5),
             last_mouse_position: Vec2::new(-1.0, -1.0),
             start_hex: None,
             end_hex: None,
+            ground,
+            walls,
         }
     }
 
@@ -56,43 +81,14 @@ impl State {
 
 impl WindowHandler for State {
     fn on_draw(&mut self, helper: &mut WindowHelper<()>, graphics: &mut Graphics2D) {
+        let now = Instant::now();
         graphics.clear_screen(Color::from_rgb(0.9, 0.9, 0.9));
 
-        for h in &self.honeycomb.grid {
-            self.draw_hexagon(h, graphics, Color::BLACK);
-            let walkable = self.honeycomb.data.get(h).unwrap();
-
-            if *walkable {
-            } else {
-                self.draw_hexagon(h, graphics, Color::RED);
-            }
-        }
-
-        let ground = self
-            .honeycomb
-            .grid
-            .iter()
-            .filter(|h| {
-                if let Some(d) = self.honeycomb.data.get(*h) {
-                    *d
-                } else {
-                    false
-                }
-            })
-            .collect::<Vec<_>>();
-
-        let walls = self
-            .honeycomb
-            .grid
-            .iter()
-            .filter(|h| !ground.contains(h))
-            .collect::<Vec<_>>();
-
-        for h in ground {
+        for h in &self.ground {
             self.draw_hexagon(h, graphics, Color::LIGHT_GRAY);
         }
 
-        for h in walls {
+        for h in &self.walls {
             self.draw_hexagon(h, graphics, Color::BLACK);
         }
 
@@ -115,6 +111,8 @@ impl WindowHandler for State {
         }
 
         helper.request_redraw();
+
+        println!("{:?}", now.elapsed().as_millis());
     }
 
     fn on_mouse_move(&mut self, _helper: &mut WindowHelper<()>, position: Vec2) {
