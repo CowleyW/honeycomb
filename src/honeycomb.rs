@@ -1,15 +1,17 @@
 use crate::cartesian_point::CartesianPoint;
 use crate::hex_cell::HexCell;
-use std::collections::HashMap;
+use std::cmp::Ordering;
+use std::collections::{HashMap, VecDeque};
 
 pub struct Honeycomb<T> {
     pub grid: Vec<HexCell>,
     pub data: HashMap<HexCell, T>,
+    size: usize,
 }
 
 impl<T> Honeycomb<T> {
-    pub fn new(n: usize) -> Self {
-        let n = n as i32;
+    pub fn new(size: usize) -> Self {
+        let n = size as i32;
         let mut grid = Vec::new();
 
         for q in -n..=n {
@@ -22,7 +24,7 @@ impl<T> Honeycomb<T> {
         }
         let data = HashMap::new();
 
-        Self { grid, data }
+        Self { grid, data, size }
     }
 
     pub fn nearest_hex(&self, point: CartesianPoint) -> Option<HexCell> {
@@ -51,5 +53,65 @@ impl<T> Honeycomb<T> {
         } else {
             None
         }
+    }
+
+    pub fn shortest_path(
+        &self,
+        from: &HexCell,
+        to: &HexCell,
+        filter: fn(&T) -> bool,
+    ) -> Option<Vec<HexCell>> {
+        let mut queue = VecDeque::<HexCell>::new();
+        queue.push_front(*from);
+
+        let mut came_from = HashMap::<HexCell, HexCell>::new();
+
+        while let Some(h) = queue.pop_back() {
+            if h == *to {
+                let mut path = vec![h];
+                while let Some(v) = came_from.get(path.last().unwrap()) {
+                    path.push(*v);
+
+                    if v == from {
+                        path.reverse();
+                        return Some(path);
+                    }
+                }
+            } else {
+                for n in self.neighbors_of(h) {
+                    let seen = came_from.contains_key(&n);
+
+                    let valid = if let Some(t) = self.data.get(&n) {
+                        filter(t)
+                    } else {
+                        false
+                    };
+
+                    if !seen && valid {
+                        came_from.insert(n, h);
+                        queue.push_front(n);
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
+    pub fn neighbors_of(&self, hex: HexCell) -> Vec<HexCell> {
+        let directions: [HexCell; 6] = [
+            HexCell::new(1, 0),
+            HexCell::new(1, -1),
+            HexCell::new(0, -1),
+            HexCell::new(-1, 0),
+            HexCell::new(-1, 1),
+            HexCell::new(0, 1),
+        ];
+
+        directions
+            .into_iter()
+            .map(|d| d + hex)
+            .filter(|n| n.axial_dist_to(&HexCell::origin()) <= self.size)
+            .collect::<Vec<_>>()
     }
 }

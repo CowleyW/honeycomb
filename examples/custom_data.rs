@@ -64,7 +64,7 @@ impl WindowHandler for Handler {
 }
 
 fn main() {
-    let window = Window::new_centered("Custom Data", (800, 600)).unwrap();
+    let window = Window::new_centered("Custom Data", (WIDTH, HEIGHT)).unwrap();
 
     window.run_loop(Handler::new());
 }

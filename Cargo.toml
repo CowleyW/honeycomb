@@ -16,3 +16,7 @@ path = "examples/grid_demo.rs"
 [[example]]
 name = "custom_data"
 path = "examples/custom_data.rs"
+
+[[example]]
+name = "pathfinding"
+path = "examples/pathfinding.rs"

@@ -72,7 +72,7 @@ impl WindowHandler for Handler {
 }
 
 fn main() {
-    let window = Window::new_centered("Honeycomb Grid", (800, 600)).unwrap();
+    let window = Window::new_centered("Honeycomb Grid", (WIDTH, HEIGHT)).unwrap();
 
     window.run_loop(Handler::new());
 }

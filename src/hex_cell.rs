@@ -1,4 +1,5 @@
 use crate::cartesian_point::CartesianPoint;
+use std::cmp::Ordering;
 use std::ops::{Add, Sub};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
@@ -60,6 +61,39 @@ impl HexCell {
         let vec = self - to;
 
         (vec.q.abs() + vec.r.abs() + (-vec.q - vec.r).abs()) as usize / 2
+    }
+
+    pub fn shortest_path(&self, to: &HexCell, visitable: Vec<&HexCell>) -> Option<Vec<HexCell>> {
+        if self == to {
+            return Some(vec![*self]);
+        }
+
+        let visitable = visitable
+            .into_iter()
+            .filter(|h| {
+                println!("{:?}, {:?}, {:?}", h, self, *h != self);
+                *h != self
+            })
+            .collect::<Vec<_>>();
+
+        println!("Second: {}", visitable.len());
+        let shortest_path = self
+            .neighbors()
+            .into_iter()
+            .map(|h| h.shortest_path(to, visitable.clone()))
+            .min_by(|a, b| match (a, b) {
+                (Some(a), Some(b)) => a.len().cmp(&b.len()),
+                (Some(_), None) => Ordering::Less,
+                (None, Some(_)) => Ordering::Greater,
+                (None, None) => Ordering::Equal,
+            });
+
+        if let Some(Some(mut path)) = shortest_path {
+            path.push(*self);
+            Some(path)
+        } else {
+            None
+        }
     }
 }
 
