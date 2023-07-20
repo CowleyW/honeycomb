@@ -67,7 +67,7 @@ impl WindowHandler for Handler {
 
     fn on_mouse_move(&mut self, _helper: &mut WindowHelper<()>, position: Vec2) {
         let world_position = self.camera.screen_to_world(position.x, position.y);
-        self.target_hex = self.honeycomb.nearest_hex(world_position);
+        self.target_hex = self.honeycomb.hex_on_point(world_position);
     }
 }
 

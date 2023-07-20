@@ -8,7 +8,6 @@ use speedy2d::color::Color;
 use speedy2d::dimen::Vec2;
 use speedy2d::window::{KeyScancode, VirtualKeyCode, WindowHandler, WindowHelper};
 use speedy2d::{Graphics2D, Window};
-use std::time::Instant;
 
 const WIDTH: u32 = 1600;
 const HEIGHT: u32 = 1200;
@@ -28,7 +27,8 @@ impl State {
         let mut honeycomb = Honeycomb::<bool>::new(20);
 
         for h in honeycomb.grid.iter() {
-            honeycomb.data.insert(*h, random::<bool>());
+            let is_ground = random::<u8>() > 100;
+            honeycomb.data.insert(*h, is_ground);
         }
 
         let ground = honeycomb
@@ -53,7 +53,7 @@ impl State {
 
         Self {
             honeycomb,
-            camera: Camera::new(0.0, 0.0, WIDTH as f32, HEIGHT as f32, 5.5),
+            camera: Camera::new(0.0, 0.0, WIDTH as f32, HEIGHT as f32, 5.2),
             last_mouse_position: Vec2::new(-1.0, -1.0),
             start_hex: None,
             end_hex: None,
@@ -70,18 +70,17 @@ impl State {
             .map(|p| (p.x, p.y))
             .collect::<Vec<_>>();
 
-        graphics.draw_line(vertices[0], vertices[1], 2.0, color);
-        graphics.draw_line(vertices[1], vertices[2], 2.0, color);
-        graphics.draw_line(vertices[2], vertices[3], 2.0, color);
-        graphics.draw_line(vertices[3], vertices[4], 2.0, color);
-        graphics.draw_line(vertices[4], vertices[5], 2.0, color);
-        graphics.draw_line(vertices[5], vertices[0], 2.0, color);
+        graphics.draw_line(vertices[0], vertices[1], 4.0, color);
+        graphics.draw_line(vertices[1], vertices[2], 4.0, color);
+        graphics.draw_line(vertices[2], vertices[3], 4.0, color);
+        graphics.draw_line(vertices[3], vertices[4], 4.0, color);
+        graphics.draw_line(vertices[4], vertices[5], 4.0, color);
+        graphics.draw_line(vertices[5], vertices[0], 4.0, color);
     }
 }
 
 impl WindowHandler for State {
     fn on_draw(&mut self, helper: &mut WindowHelper<()>, graphics: &mut Graphics2D) {
-        let now = Instant::now();
         graphics.clear_screen(Color::from_rgb(0.9, 0.9, 0.9));
 
         for h in &self.ground {
@@ -111,8 +110,6 @@ impl WindowHandler for State {
         }
 
         helper.request_redraw();
-
-        println!("{:?}", now.elapsed().as_millis());
     }
 
     fn on_mouse_move(&mut self, _helper: &mut WindowHelper<()>, position: Vec2) {
@@ -126,7 +123,7 @@ impl WindowHandler for State {
         _scancode: KeyScancode,
     ) {
         if let Some(keycode) = virtual_key_code {
-            let nearest_hex = self.honeycomb.nearest_hex(
+            let nearest_hex = self.honeycomb.hex_on_point(
                 self.camera
                     .screen_to_world(self.last_mouse_position.x, self.last_mouse_position.y),
             );

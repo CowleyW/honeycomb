@@ -17,17 +17,19 @@ impl HexCell {
         Self::new(0, 0)
     }
 
-    pub fn neighbors(&self) -> Vec<HexCell> {
-        let directions: [HexCell; 6] = [
+    pub fn directions() -> [Self; 6] {
+        [
             HexCell::new(1, 0),
             HexCell::new(1, -1),
             HexCell::new(0, -1),
             HexCell::new(-1, 0),
             HexCell::new(-1, 1),
             HexCell::new(0, 1),
-        ];
+        ]
+    }
 
-        directions
+    pub fn neighbors(&self) -> Vec<HexCell> {
+        Self::directions()
             .into_iter()
             .map(|d| &d + self)
             .collect::<Vec<_>>()
