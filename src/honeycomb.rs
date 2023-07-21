@@ -1,6 +1,7 @@
 use crate::cartesian_point::CartesianPoint;
 use crate::hex_cell::HexCell;
-use std::collections::{HashMap, VecDeque};
+use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap, VecDeque};
 
 pub struct Honeycomb<T> {
     pub grid: Vec<HexCell>,
@@ -117,5 +118,90 @@ impl<T> Honeycomb<T> {
             .map(|d| d + hex)
             .filter(|n| n.axial_dist_to(&HexCell::origin()) <= self.size)
             .collect::<Vec<_>>()
+    }
+}
+
+impl Honeycomb<u8> {
+    pub fn cheapest_path(
+        &self,
+        from: &HexCell,
+        to: &HexCell,
+        heuristic: fn(&HexCell, &HexCell) -> usize,
+    ) -> Option<Vec<HexCell>> {
+        let mut work_list = BinaryHeap::<HexWeight>::new();
+        work_list.push(HexWeight::new(0, *from));
+
+        let mut came_from = HashMap::<HexCell, HexCell>::new();
+        let mut cost_so_far = HashMap::<HexCell, usize>::new();
+        cost_so_far.insert(*from, 0);
+
+        while let Some(weight) = work_list.pop() {
+            let curr = weight.hex;
+            if &curr == to {
+                let mut path = vec![curr];
+
+                // While we have not returned to the starting cell, append the previous cell to
+                // the path
+                while let Some(v) = came_from.get(path.last().unwrap()) {
+                    path.push(*v);
+
+                    if v == from {
+                        // path goes from end -> start, we want it the other way around
+                        path.reverse();
+
+                        return Some(path);
+                    }
+                }
+            } else {
+                for neighbor in self.neighbors_of(curr) {
+                    let new_cost = if let Some(cost) = self.data.get(&neighbor) {
+                        cost_so_far.get(&curr).unwrap() + *cost as usize
+                    } else {
+                        usize::MAX
+                    };
+
+                    let is_cheaper = if let Some(cost) = cost_so_far.get(&neighbor) {
+                        new_cost < *cost
+                    } else {
+                        true
+                    };
+
+                    if is_cheaper {
+                        cost_so_far.insert(neighbor, new_cost);
+
+                        let priority = new_cost + heuristic(&neighbor, to);
+                        work_list.push(HexWeight::new(priority, neighbor));
+
+                        came_from.insert(neighbor, curr);
+                    }
+                }
+            }
+        }
+
+        None
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct HexWeight {
+    pub cost: usize,
+    pub hex: HexCell,
+}
+
+impl HexWeight {
+    fn new(cost: usize, hex: HexCell) -> Self {
+        Self { cost, hex }
+    }
+}
+
+impl PartialOrd<Self> for HexWeight {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for HexWeight {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.cost.cmp(&self.cost)
     }
 }

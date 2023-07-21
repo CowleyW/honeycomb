@@ -8,6 +8,11 @@ edition = "2021"
 [dev-dependencies]
 speedy2d = "1.12.0"
 rand = "0.8.5"
+itertools = "0.11.0"
+
+[[example]]
+name = "a_star"
+path = "examples/a_star.rs"
 
 [[example]]
 name = "grid_demo"
