@@ -84,7 +84,7 @@ impl WindowHandler for State {
         if let (Some(start), Some(finish)) = (self.start_hex, self.end_hex) {
             let path = self
                 .honeycomb
-                .cheapest_path(&start, &finish, |a, b| a.axial_dist_to(b))
+                .cheapest_path(&start, &finish, |_, new_val| *new_val as usize, |a, b| a.axial_dist_to(b))
                 .unwrap();
 
             for (h1, h2) in path.iter().tuple_windows() {
