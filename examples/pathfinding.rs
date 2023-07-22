@@ -100,7 +100,7 @@ impl WindowHandler for State {
         }
 
         if let (Some(a), Some(b)) = (self.start_hex, self.end_hex) {
-            let p = self.honeycomb.shortest_path(&a, &b, |x| *x);
+            let p = self.honeycomb.shortest_path(&a, &b, |_, x| *x);
 
             if let Some(path) = p {
                 for h in path {

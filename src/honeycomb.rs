@@ -63,13 +63,15 @@ impl<T> Honeycomb<T> {
     /// Returns the shortest path between `from` and `to`, or `None` if no such path can be found.
     ///
     /// Uses a breadth-first approach to finding the path.
+    ///
+    /// [`filter`] takes in the current cell's value and the new cell's value, and returns whether
+    /// it is legal to move across this cell
     pub fn shortest_path(
         &self,
         from: &HexCell,
         to: &HexCell,
-        filter: fn(&T) -> bool,
+        filter: fn(curr_val: &T, new_val: &T) -> bool,
     ) -> Option<Vec<HexCell>> {
-        let now = Instant::now();
         let mut work_list = VecDeque::<HexCell>::new();
         work_list.push_front(*from);
 
@@ -80,27 +82,13 @@ impl<T> Honeycomb<T> {
             for neighbor in self.neighbors_of(hex) {
                 // We found our target! Time to reconstruct the path
                 if neighbor == *to {
-                    let mut path = vec![neighbor, hex];
-
-                    // While we have not returned to the starting cell, append the previous cell to
-                    // the path
-                    while let Some(v) = came_from.get(path.last().unwrap()) {
-                        path.push(*v);
-
-                        if v == from {
-                            // path goes from end -> start, we want it the other way around
-                            path.reverse();
-
-                            println!("{:?}", now.elapsed().as_micros());
-                            return Some(path);
-                        }
-                    }
+                    return Self::reconstruct_path(*to, hex, *from, came_from);
                 }
 
                 let seen = came_from.contains_key(&neighbor);
 
-                let valid = if let Some(t) = self.data.get(&neighbor) {
-                    filter(t)
+                let valid = if let (Some(curr), Some(new)) = (self.data.get(&hex), self.data.get(&neighbor)) {
+                    filter(curr, new)
                 } else {
                     false
                 };
@@ -122,7 +110,10 @@ impl<T> Honeycomb<T> {
     /// cost for movement
     ///
     /// [`heuristic`] takes in the current cell and the destination and cell, and returns a usize
-    /// estimate for the distance to the destination
+    /// estimate for the distance to the destination. The speed of this function is heavily affected
+    /// by the given heuristic function; the more strict the function is, the less additional paths
+    /// will be explored. However, this function is ONLY guaranteed to find the cheapest path if the
+    /// heuristic function NEVER overestimates the cost of reaching the destination.
     pub fn cheapest_path(
         &self,
         from: &HexCell,
@@ -130,7 +121,6 @@ impl<T> Honeycomb<T> {
         cost_fn: fn(curr_val: &T, next_val: &T) -> usize,
         heuristic: fn(curr: &HexCell, dest: &HexCell) -> usize,
     ) -> Option<Vec<HexCell>> {
-        let now = Instant::now();
         let mut work_list = BinaryHeap::<HexWeight>::new();
         work_list.push(HexWeight::new(0, *from));
 
@@ -143,21 +133,7 @@ impl<T> Honeycomb<T> {
 
             for neighbor in self.neighbors_of(curr) {
                 if &neighbor == to {
-                    let mut path = vec![neighbor, curr];
-
-                    // While we have not returned to the starting cell, append the previous cell to
-                    // the path
-                    while let Some(v) = came_from.get(path.last().unwrap()) {
-                        path.push(*v);
-
-                        if v == from {
-                            // path goes from end -> start, we want it the other way around
-                            path.reverse();
-
-                            println!("{:?}", now.elapsed().as_micros());
-                            return Some(path);
-                        }
-                    }
+                    return Self::reconstruct_path(*to, curr, *from, came_from);
                 }
 
                 if let (Some(old_val), Some(new_val)) = (self.data.get(&curr), self.data.get(&neighbor)) {
@@ -191,6 +167,25 @@ impl<T> Honeycomb<T> {
             .map(|d| d + hex)
             .filter(|n| n.axial_dist_to(&HexCell::origin()) <= self.size)
             .collect::<Vec<_>>()
+    }
+
+    fn reconstruct_path(dest: HexCell, penultimate: HexCell, start: HexCell, came_from: HashMap<HexCell, HexCell>) -> Option<Vec<HexCell>> {
+        let mut path = vec![dest, penultimate];
+
+        // While we have not returned to the starting cell, append the previous cell to
+        // the path
+        while let Some(v) = came_from.get(path.last().unwrap()) {
+            path.push(*v);
+
+            if v == &start {
+                // path goes from end -> start, we want it the other way around
+                path.reverse();
+
+                return Some(path);
+            }
+        }
+
+        None
     }
 }
 
