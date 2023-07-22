@@ -2,8 +2,6 @@ use crate::cartesian_point::CartesianPoint;
 use crate::hex_cell::HexCell;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, VecDeque};
-use std::ops::Add;
-use std::time::Instant;
 
 pub struct Honeycomb<T> {
     pub grid: Vec<HexCell>,
@@ -32,7 +30,7 @@ impl<T> Honeycomb<T> {
 
     /// Returns the hex on which the given point is located, or `None` if the point is outside the
     /// bounds of this honeycomb
-    pub fn hex_on_point(&self, point: CartesianPoint) -> Option<HexCell> {
+    pub fn world_to_hex(&self, point: CartesianPoint) -> Option<HexCell> {
         let frac_q = 3f32.sqrt() / 3.0 * point.x - 1.0 / 3.0 * point.y;
         let frac_r = 2.0 / 3.0 * point.y;
         let frac_s = -frac_q - frac_r;
@@ -77,7 +75,7 @@ impl<T> Honeycomb<T> {
 
         let mut came_from = HashMap::<HexCell, HexCell>::new();
 
-        // Loop through the work list as long as we have more cells to check
+        // https://en.wikipedia.org/wiki/Breadth-first_search
         while let Some(hex) = work_list.pop_back() {
             for neighbor in self.neighbors_of(hex) {
                 // We found our target! Time to reconstruct the path
@@ -114,7 +112,7 @@ impl<T> Honeycomb<T> {
     /// by the given heuristic function; the more strict the function is, the less additional paths
     /// will be explored. However, this function is ONLY guaranteed to find the cheapest path if the
     /// heuristic function NEVER overestimates the cost of reaching the destination.
-    pub fn cheapest_path(
+    pub fn cheapest_path( 
         &self,
         from: &HexCell,
         to: &HexCell,
@@ -128,6 +126,7 @@ impl<T> Honeycomb<T> {
         let mut cost_so_far = HashMap::<HexCell, usize>::new();
         cost_so_far.insert(*from, 0);
 
+        // https://en.wikipedia.org/wiki/A*_search_algorithm
         while let Some(weight) = work_list.pop() {
             let curr = weight.hex;
 
@@ -169,6 +168,7 @@ impl<T> Honeycomb<T> {
             .collect::<Vec<_>>()
     }
 
+    /// Reconstructs the path from the destination to the start given a map from cell to cell
     fn reconstruct_path(dest: HexCell, penultimate: HexCell, start: HexCell, came_from: HashMap<HexCell, HexCell>) -> Option<Vec<HexCell>> {
         let mut path = vec![dest, penultimate];
 

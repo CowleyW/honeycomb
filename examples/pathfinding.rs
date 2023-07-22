@@ -123,7 +123,7 @@ impl WindowHandler for State {
         _scancode: KeyScancode,
     ) {
         if let Some(keycode) = virtual_key_code {
-            let nearest_hex = self.honeycomb.hex_on_point(
+            let nearest_hex = self.honeycomb.world_to_hex(
                 self.camera
                     .screen_to_world(self.last_mouse_position.x, self.last_mouse_position.y),
             );
@@ -140,7 +140,7 @@ impl WindowHandler for State {
 }
 
 fn main() {
-    let window = Window::new_centered("Custom Data", (WIDTH, HEIGHT)).unwrap();
+    let window = Window::new_centered("Pathfinding", (WIDTH, HEIGHT)).unwrap();
 
     window.run_loop(State::new());
 }
